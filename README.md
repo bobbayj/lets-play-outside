@@ -46,4 +46,4 @@ Hold me accountable by buying me a coffee 😀 [![Donate](https://img.shields.io
     - Explore
 - Swipe...
   - **Left**; next suggestion + wiggle the filter button
-  - **Right**; prompt navigation?
+  - **Right**; prompt navigation
