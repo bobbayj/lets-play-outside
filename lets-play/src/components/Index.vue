@@ -83,7 +83,13 @@ export default {
           style: "mapbox://styles/mapbox/streets-v11",
           center: this.center,
           zoom: 11,
-        });
+          attributionControl: false,
+        })
+          .addControl(new mapboxgl.NavigationControl(), 'top-left')
+          .addControl(new mapboxgl.AttributionControl({
+            compact: true
+          })
+          );
         
         let geocoder =  new MapboxGeocoder({
             accessToken: this.access_token,
@@ -232,4 +238,5 @@ export default {
 .copy-btn:focus {
   outline: none;
 }
+
 </style>
