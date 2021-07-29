@@ -10,9 +10,10 @@
       <div class="dislpay-arena">
         <div class="coordinates-header">
           <h3>Current Coordinates</h3>
-          <p>Latitude: {{ center[0] }}</p>
-          <p>Longitude: {{ center[1] }}</p>
-          <p> Location tags: {{ category }}</p>
+          <p>Latitude: {{ map_center.lat }}</p>
+          <p>Longitude: {{ map_center.lng }}</p>
+          <p>Location tags: {{ category }} </p>
+          <p>Your location: {{ this.user_pos }} </p>
         </div>
 
         <div class="coordinates-header">
@@ -60,19 +61,31 @@ import axios from "axios";
 import MapboxGeocoder from "@mapbox/mapbox-gl-geocoder";
 import "@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css";
 export default {
+  props: ['user_pos'],
   data() {
     return {
       loading: false,
       location: "",
       category: "",
       access_token: process.env.VUE_APP_MAP_ACCESS_TOKEN,
-      center: [151.21, -33.868],
+      map_center: this.user_pos,
       map: {},
       currentMarkers: [],
+      userMarker: {},
     };
   },
   mounted() {
     this.createMap();
+  },
+  watch: {
+    // whenever the user position changes, reset centre and drop a market
+    user_pos: {
+      handler() {
+        console.log('Flying...')
+        this.flyToUser();
+      },
+      deep: true
+    }
   },
   methods: {
     async createMap() {
@@ -81,7 +94,7 @@ export default {
         this.map = new mapboxgl.Map({
           container: "map",
           style: "mapbox://styles/mapbox/streets-v11",
-          center: this.center,
+          center: this.map_center,
           zoom: 11,
           attributionControl: false,
         })
@@ -107,10 +120,10 @@ export default {
             .addTo(this.map);
             this.currentMarkers.push(marker)
           
-          this.center = e.result.center;
+          this.map_center = e.result.center;
 
           marker.on("dragend", (e) => {
-            this.center = Object.values(e.target.getLngLat());
+            this.map_center = Object.values(e.target.getLngLat());
           });
         });
       } catch (err) {
@@ -121,7 +134,7 @@ export default {
       try {
         this.loading = true;
         const response = await axios.get(`https://api.mapbox.com/geocoding/v5/mapbox.places/`
-          + `${this.center[0]},${this.center[1]}.json?`
+          + `${this.map_center[0]},${this.map_center[1]}.json?`
           + `access_token=${this.access_token}`
           // + `&types=poi`
           // + `&proximity=Lon,Lat`
@@ -148,6 +161,27 @@ export default {
         alert("Location Copied")
       }
       return;
+    },
+    async flyToUser() {
+      console.log(this.user_pos)
+
+      const userMarker = new mapboxgl.Marker({
+        draggable: true,
+        color: "#3A9CFF",
+      })
+        .setLngLat(this.user_pos)
+        .addTo(this.map);
+      this.userMarker = userMarker
+
+      this.map.flyTo({
+        center: this.user_pos,
+        zoom: 14,
+        essential: true // this animation is considered essential with respect to prefers-reduced-motion
+      });
+      
+      console.log('Landed')
+
+      
     },
   },
 };

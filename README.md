@@ -15,8 +15,8 @@ Hold me accountable by buying me a coffee 😀 [![Donate](https://img.shields.io
 ## Architecture
 - Vue 3 frontend
   - Integrate with MapBox
-- Backend: don't need one yet?
-  - *Recommendations welcome*
+- Backend: *Recommendations welcome*
+  - Should be server-side processing for location search
 
 ## User Journey
 *I should really put this into a note-taking app, like Notion. But this will do for now.*
@@ -47,3 +47,9 @@ Hold me accountable by buying me a coffee 😀 [![Donate](https://img.shields.io
 - Swipe...
   - **Left**; next suggestion + wiggle the filter button
   - **Right**; prompt navigation?
+
+## To do
+<br><br>
+- Set userlocation
+- Search for POI locations around user
+- Filter 
