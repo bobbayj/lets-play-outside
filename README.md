@@ -50,6 +50,5 @@ Hold me accountable by buying me a coffee 😀 [![Donate](https://img.shields.io
 
 ## To do
 <br><br>
-- Set userlocation
 - Search for POI locations around user
 - Filter 

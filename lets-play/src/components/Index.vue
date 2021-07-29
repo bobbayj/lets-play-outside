@@ -71,7 +71,7 @@ export default {
       map_center: this.user_pos,
       map: {},
       currentMarkers: [],
-      userMarker: {},
+      userMarker: null,
     };
   },
   mounted() {
@@ -165,13 +165,17 @@ export default {
     async flyToUser() {
       console.log(this.user_pos)
 
-      const userMarker = new mapboxgl.Marker({
-        draggable: true,
-        color: "#3A9CFF",
-      })
-        .setLngLat(this.user_pos)
-        .addTo(this.map);
-      this.userMarker = userMarker
+      if (!this.userMarker) {
+        const userMarker = new mapboxgl.Marker({
+          draggable: true,
+          color: "#3A9CFF",
+        })
+          .setLngLat(this.user_pos)
+          .addTo(this.map);
+        this.userMarker = userMarker
+      } else {
+        this.userMarker.setLngLat(this.user_pos)
+      }
 
       this.map.flyTo({
         center: this.user_pos,
