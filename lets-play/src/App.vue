@@ -6,6 +6,9 @@
         <div class="header">
           <h3>Let's Play</h3>
           <button id='find-me'
+            type="button"
+            :disabled="loading"
+            :class="{ disabled: loading}"
             class='location-btn'
             @click="findme">Get my location</button>
         </div>
@@ -25,6 +28,7 @@ export default {
   data() {
     return {
       location: {lat:-33.868, lng:151.21},
+      loading: false,
       errorStr: null,
     };
   },
@@ -36,16 +40,17 @@ export default {
         return;
       }
 
-      console.log("Getting location...")
+      this.loading = true
       // get position
       
       navigator.geolocation.getCurrentPosition( pos => {
-          this.location = {lng: pos.coords.longitude, lat: pos.coords.latitude};
-          console.log("Location found", this.location)
-        }, err => {
-          this.errorStr = err.message;
-          console.log(this.errorStr)
-        })
+        this.location = {lng: pos.coords.longitude, lat: pos.coords.latitude};
+        console.log("Location found", this.location)
+        this.loading = false
+      }, err => {
+        this.errorStr = err.message;
+        console.log(this.errorStr)
+      })
     },
   },
 };
@@ -91,5 +96,10 @@ nav {
 }
 .location-btn:focus {
   outline: none;
+}
+
+.disabled {
+  background: #db7990;
+  cursor: not-allowed;
 }
 </style>

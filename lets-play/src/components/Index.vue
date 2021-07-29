@@ -4,6 +4,7 @@
       <!-- Map Display here -->
       <div class="map-holder">
         <div id="map"></div>
+        <div id='info' class='info'></div>
       </div>
 
       <!-- Coordinates Display here -->
@@ -38,8 +39,8 @@
             class="action-btn"
             @click="getLocation"
           >
-            Get Location
-          </button>
+            Get Location (to remove)
+          </button><br>
           <button
             type="button"
             :disabled="loading"
@@ -48,6 +49,15 @@
             @click="removeMarkers"
           >
             Remove Markers
+          </button><br>
+          <button
+            type="button"
+            :disabled="loading"
+            :class="{ disabled: loading}"
+            class="action-btn"
+            @click="searchAroundUser"
+          >
+            Search Places
           </button>
         </div>
       </div>
@@ -72,6 +82,7 @@ export default {
       map: {},
       currentMarkers: [],
       userMarker: null,
+      nearby_results: [],
     };
   },
   mounted() {
@@ -134,7 +145,7 @@ export default {
       try {
         this.loading = true;
         const response = await axios.get(`https://api.mapbox.com/geocoding/v5/mapbox.places/`
-          + `${this.map_center[0]},${this.map_center[1]}.json?`
+          + `${this.map_center.lng},${this.map_center.lat}.json?`
           + `access_token=${this.access_token}`
           // + `&types=poi`
           // + `&proximity=Lon,Lat`
@@ -163,8 +174,6 @@ export default {
       return;
     },
     async flyToUser() {
-      console.log(this.user_pos)
-
       if (!this.userMarker) {
         const userMarker = new mapboxgl.Marker({
           draggable: true,
@@ -182,10 +191,46 @@ export default {
         zoom: 14,
         essential: true // this animation is considered essential with respect to prefers-reduced-motion
       });
-      
-      console.log('Landed')
+    },
+    async searchAroundUser() {
+      try {
+        this.loading = true;
+        const response = await axios.get(`https://api.mapbox.com/geocoding/v5/mapbox.places/`
+          + `${this.user_pos.lng},${this.user_pos.lat}.json?`
+          + `access_token=${this.access_token}`
+          + `&types=poi`
+          + `&limit=10`
+          + `&proximity=${this.user_pos.lng},${this.user_pos.lat}`
+          // + `&bbox=${this.user_pos.lng - 0.1},${this.user_pos.lat - 0.1},${this.user_pos.lng + 0.1},${this.user_pos.lat + 0.1}`
+        );
+        this.loading = false;
+        this.nearby_results.push(response.data)
 
-      
+        //  Add a marker at each result's coordinates
+        for (const result of this.nearby_results) {
+
+          this.map.addSource('search results', {
+            type: 'geojson',
+            data: {
+              type: 'FeatureCollection',
+              features: [],
+            },
+          })
+          this.map.addLayer({
+            id: 'point',
+            source: 'search results',
+            type: 'circle',
+            paint: {
+              'circle-radius': 10,
+              'circle-color': '#448ee4'
+            },
+          });
+          this.map.getSource('search results').setData(result)
+        }
+      } catch (err) {
+        this.loading = false;
+        console.log(err);
+      }
     },
   },
 };
@@ -276,5 +321,14 @@ export default {
 .copy-btn:focus {
   outline: none;
 }
-
+.info {
+  position:relative;
+  bottom:10px;
+  right:10px;
+  }
+  .info div {
+    background:#fff;
+    padding:10px;
+    border-radius:3px;
+    }
 </style>
