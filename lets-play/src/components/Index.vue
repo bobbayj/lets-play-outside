@@ -4,7 +4,6 @@
       <!-- Map Display here -->
       <div class="map-holder">
         <div id="map"></div>
-        <div id='info' class='info'></div>
       </div>
 
       <!-- Coordinates Display here -->
@@ -141,19 +140,18 @@ export default {
         console.log("map error", err);
       }
     },
-    async getLocation() {
+    async getLocation(coords) {
       try {
         this.loading = true;
         const response = await axios.get(`https://api.mapbox.com/geocoding/v5/mapbox.places/`
-          + `${this.map_center.lng},${this.map_center.lat}.json?`
+          + `${coords.lng},${coords.lat}.json?`
           + `access_token=${this.access_token}`
-          // + `&types=poi`
+          + `&types=poi`
           // + `&proximity=Lon,Lat`
           // + `&bbox=minLon,minLat,maxLon,maxLat`
         );
         this.loading = false;
-        this.location = response.data.features[0].place_name;
-        this.category = response.data.features[0].properties.category
+        return response.data
       } catch (err) {
         this.loading = false;
         console.log(err);
@@ -205,32 +203,66 @@ export default {
         );
         this.loading = false;
         this.nearby_results.push(response.data)
-
-        //  Add a marker at each result's coordinates
-        for (const result of this.nearby_results) {
-
-          this.map.addSource('search results', {
-            type: 'geojson',
-            data: {
-              type: 'FeatureCollection',
-              features: [],
-            },
-          })
-          this.map.addLayer({
-            id: 'point',
-            source: 'search results',
-            type: 'circle',
-            paint: {
-              'circle-radius': 10,
-              'circle-color': '#448ee4'
-            },
-          });
-          this.map.getSource('search results').setData(result)
-        }
       } catch (err) {
-        this.loading = false;
-        console.log(err);
+        console.log(err)
       }
+      //  Add a marker at each result's coordinates
+      try {
+        this.map.addSource('search_results', {
+          type: 'geojson',
+          data: {
+            type: 'FeatureCollection',
+            features: [],
+          },
+        }),
+        this.map.addLayer({
+          id: 'search_results',
+          source: 'search_results',
+          type: 'circle',
+          paint: {
+            'circle-radius': 10,
+            'circle-color': '#448ee4'
+          },
+        });
+      } catch (err) {
+        console.log(err)
+      }
+      
+      console.log(this.nearby_results[this.nearby_results.length - 1])
+      this.map.getSource('search_results').setData(this.nearby_results[this.nearby_results.length - 1])
+
+      // Create a popup, but don't add it to the map yet.
+      var popup = new mapboxgl.Popup({
+        closeButton: true,
+        closeOnClick: false
+      });
+
+      this.map.on('mouseenter', 'search_results', (e) => {
+        // Change the curse style as a UI indicator.
+        console.log('mouse is in: ', e )
+        this.map.getCanvas().style.cursor = 'pointer';
+        var coordinates = e.features[0].geometry.coordinates.slice();
+        var description = `
+          Location: ${location.features[0].text}
+          Addres: ${location.features[0].place_name}
+        `;
+        
+        // Ensure that if the map is zoomed out such that multiple
+        // copies of the feature are visible, the popup appears
+        // over the copy being pointed to.
+        while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
+          coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
+        }
+        
+        // Populate the popup and set its coordinates
+        // based on the feature found.
+        popup.setLngLat(coordinates).setHTML(description).addTo(this.map);
+      });
+        
+      this.map.on('mouseleave', 'places', function () {
+        this.map.getCanvas().style.cursor = '';
+        popup.remove();
+      });
     },
   },
 };
@@ -321,14 +353,8 @@ export default {
 .copy-btn:focus {
   outline: none;
 }
-.info {
-  position:relative;
-  bottom:10px;
-  right:10px;
-  }
-  .info div {
-    background:#fff;
-    padding:10px;
-    border-radius:3px;
-    }
+.mapboxgl-popup {
+max-width: 400px;
+font: 12px/20px 'Helvetica Neue', Arial, Helvetica, sans-serif;
+}
 </style>
